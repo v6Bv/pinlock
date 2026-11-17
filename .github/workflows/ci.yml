@@ -1,0 +1,14 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install evdev
+      - run: python -m py_compile src/pinlock/*.py bin/*
+      - run: make test
+      - run: make install DESTDIR=$PWD/stage PREFIX=/usr && find stage -type f

@@ -1,0 +1,44 @@
+name: Login screen report
+description: Tell us whether pinlock works with your login or lock screen
+title: "[works?] <login screen> on <distro>"
+labels: [compatibility]
+body:
+  - type: markdown
+    attributes:
+      value: Reports that it works are just as useful as reports that it doesn't!
+  - type: dropdown
+    id: screen
+    attributes:
+      label: Login / lock screen
+      options:
+        - Plasma Login Manager
+        - SDDM
+        - LightDM
+        - GDM
+        - KDE lock screen
+        - GNOME lock screen
+        - Other (say below)
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Did it work?
+      options:
+        - "Yes, fully: PIN entry and unlock"
+        - "Partly (explain below)"
+        - "No"
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: Distro, desktop and version
+      placeholder: Fedora 43, GNOME 49
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything odd? Did Steam Big Picture open after unlocking?

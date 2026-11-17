@@ -1,0 +1,55 @@
+name: Bug report
+description: Something doesn't work as described
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Found a way past the login screen?** Please report it privately instead:
+        https://github.com/v6Bv/pinlock/security/advisories/new
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: Output of `pinlock status`
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: Distro and desktop
+      placeholder: CachyOS, KDE Plasma 6.8 (Wayland)
+    validations:
+      required: true
+  - type: dropdown
+    id: screen
+    attributes:
+      label: Which screen?
+      multiple: true
+      options:
+        - Plasma Login Manager
+        - SDDM
+        - LightDM
+        - GDM
+        - KDE lock screen
+        - GNOME lock screen
+        - Setup app
+        - Other / not a screen issue
+  - type: input
+    id: controller
+    attributes:
+      label: Controller
+      placeholder: Xbox Series controller over Bluetooth / Sunshine virtual pad / …
+  - type: textarea
+    id: logs
+    attributes:
+      label: Service log
+      description: "`journalctl -u pinlockd -b --no-pager | tail -50`"
+      render: text

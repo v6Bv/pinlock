@@ -1,0 +1,11 @@
+[Unit]
+Description=pinlock: controller PIN entry for the login and lock screens
+After=systemd-logind.service
+
+[Service]
+ExecStart=@BINDIR@/pinlockd
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

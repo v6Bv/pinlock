@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=pinlock
+GenericName=Controller Login PIN
+Comment=Set up logging in and unlocking with your game controller
+Exec=pinlock-setup
+Icon=pinlock
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=controller;gamepad;login;lock;pin;steam;

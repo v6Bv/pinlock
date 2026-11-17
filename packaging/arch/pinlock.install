@@ -1,0 +1,15 @@
+post_install() {
+  echo ":: To turn pinlock on:"
+  echo "     sudo pinlock pam enable"
+  echo "     sudo systemctl enable --now pinlockd"
+  echo ":: Then open \"pinlock\" from your app menu to set your PIN."
+}
+
+post_upgrade() {
+  systemctl try-restart pinlockd.service 2>/dev/null || true
+}
+
+pre_remove() {
+  pinlock pam disable || true
+  systemctl disable --now pinlockd.service 2>/dev/null || true
+}

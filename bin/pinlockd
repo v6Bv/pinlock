@@ -1,0 +1,13 @@
+#!/usr/bin/python3 -I
+import os
+import sys
+
+# make install replaces @LIBDIR@; from a git checkout, use ../src.
+LIBDIR = "@LIBDIR@"
+if LIBDIR.startswith("@"):
+    LIBDIR = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "src")
+sys.path.insert(0, LIBDIR)
+
+from pinlock import daemon  # noqa: E402
+
+daemon.run(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "pinlock"))
