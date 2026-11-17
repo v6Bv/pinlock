@@ -1,0 +1,19 @@
+pkgbase = pinlock
+	pkgdesc = Log in and unlock with a PIN typed on a game controller
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://github.com/v6Bv/pinlock
+	install = pinlock.install
+	arch = any
+	license = MIT
+	depends = python
+	depends = python-evdev
+	depends = polkit
+	depends = systemd
+	optdepends = python-pyqt6: setup app and login screen passkey panel
+	optdepends = layer-shell-qt: login screen passkey panel
+	optdepends = steam: open Big Picture after unlocking
+	source = pinlock-0.1.0.tar.gz::https://github.com/v6Bv/pinlock/archive/v0.1.0.tar.gz
+	sha256sums = a996b45982047551ae1a8e3bc924a2f43e9f64fd68a14c9fe1416d5c304091c7
+
+pkgname = pinlock
