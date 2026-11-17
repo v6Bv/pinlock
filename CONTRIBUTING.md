@@ -33,6 +33,15 @@ sudo ./install.sh                 # reinstalls over the old copy
 journalctl -u pinlockd -f         # watch the service
 ```
 
+Preview the lock screen panel without locking (Plasma 6, close it with your
+password):
+
+```bash
+mkdir -p /tmp/pl/plasma/shells && cp -r data/plasma-shell/* /tmp/pl/plasma/shells/
+XDG_DATA_HOME=/tmp/pl PLASMA_DEFAULT_SHELL=io.github.v6bv.pinlock \
+    /usr/lib/kscreenlocker_greet --testing
+```
+
 **Keep a root shell open while testing PAM changes** (`sudo -i` in a
 separate terminal), just in case.
 
@@ -45,10 +54,13 @@ src/pinlock/
   pinstore.py   scrypt PIN storage
   pam.py        adding/removing the PAM block
   daemon.py     pinlockd: buttons -> keystrokes on login/lock screens
+  overlay.py    login screen passkey panel (layer-shell, qml/Overlay.qml)
+  lockscreen.py turning the lock screen panel on/off for KWin
   cli.py        the pinlock command
   config.py     per-user unlock action
   gui.py        PyQt6 setup app
 data/           systemd unit, polkit policy, desktop file, icon
+  plasma-shell/ lock screen package; PinPad.qml is the shared panel
 packaging/arch  PKGBUILD
 tests/          unittest suite
 ```

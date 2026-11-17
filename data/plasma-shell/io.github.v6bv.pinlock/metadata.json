@@ -1,0 +1,17 @@
+{
+    "KPackageStructure": "Plasma/Shell",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "v6Bv"
+            }
+        ],
+        "Description": "Lock screen only: Plasma's lock screen plus the pinlock controller passkey panel. Used by KWin's lock screen when pinlock's lock screen panel is turned on.",
+        "Id": "io.github.v6bv.pinlock",
+        "License": "MIT",
+        "Name": "pinlock lock screen",
+        "Version": "0.1.0",
+        "Website": "https://github.com/v6Bv/pinlock"
+    },
+    "X-Plasma-APIVersion": "2"
+}

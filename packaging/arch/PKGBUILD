@@ -7,7 +7,8 @@ arch=('any')
 url="https://github.com/v6Bv/pinlock"
 license=('MIT')
 depends=('python' 'python-evdev' 'polkit' 'systemd')
-optdepends=('python-pyqt6: controller-friendly setup app'
+optdepends=('python-pyqt6: setup app and login screen passkey panel'
+            'layer-shell-qt: login screen passkey panel'
             'steam: open Big Picture after unlocking')
 install=pinlock.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")

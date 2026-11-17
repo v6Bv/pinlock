@@ -11,14 +11,18 @@ streaming setups (Sunshine/Moonlight). Your normal password keeps working in
 the same box.
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="49%" alt="pinlock setup app home screen">
-  <img src="docs/screenshots/pin.png" width="49%" alt="Choosing a PIN with the controller">
+  <img src="docs/screenshots/passkey-panel.png" width="26%" alt="The passkey panel shown on the login and lock screens">
+  &nbsp;
+  <img src="docs/screenshots/home.png" width="44%" alt="pinlock setup app home screen">
 </p>
 
 ## Features
 
 - **Controller PIN on the login and lock screens.** Each button types a
   digit into the password box, and Start submits.
+- **Xbox-style passkey panel.** Press a controller button on the login
+  screen and a panel appears in the bottom-left corner showing which button
+  is which digit, with dots as you type. The lock screen can show it too.
 - **Your password still works.** Anything that isn't your PIN goes on to
   the normal password check.
 - **Steam Big Picture on unlock.** Unlocking with the controller can open
@@ -63,20 +67,22 @@ whether it worked or not.
 
 ## Install
 
-Requirements: Python 3.9+, `python-evdev`, `polkit`, systemd, and
-`python-pyqt6` for the setup app.
+Requirements: Python 3.9+, `python-evdev`, `polkit`, systemd, plus
+`python-pyqt6` and `layer-shell-qt` for the setup app and the passkey panel.
 
 ```bash
 # Arch / CachyOS / Manjaro
-sudo pacman -S python-evdev python-pyqt6 polkit
+sudo pacman -S python-evdev python-pyqt6 layer-shell-qt polkit
 
 git clone https://github.com/v6Bv/pinlock
 cd pinlock
 sudo ./install.sh
 ```
 
-Then open **pinlock** from your app menu (or run `pinlock-setup`) and choose
-a PIN with your controller. Lock the screen (Super+L) to try it.
+Then open **pinlock** from your app menu (or run `pinlock-setup`), choose a
+PIN with your controller, and turn on **Lock screen panel** if you want the
+passkey panel on the lock screen too (it shows up from your next login).
+Lock the screen (Super+L) to try it.
 
 An Arch `PKGBUILD` is in [`packaging/arch`](packaging/arch).
 
@@ -89,6 +95,8 @@ sudo pinlock set          set or change your PIN (typed on the keyboard)
 sudo pinlock remove       remove your PIN
 sudo pinlock pam enable   hook the login/lock screens (install.sh does this)
 sudo pinlock pam disable  unhook them
+pinlock lockscreen enable show the passkey panel on the lock screen (next login)
+pinlock lockscreen disable
 ```
 
 `pinlock-setup --fullscreen` starts the setup app full screen (F11 switches).
@@ -120,6 +128,20 @@ controller ──► pinlockd (root) ──► virtual keyboard ──► passwo
 - **PINs** live in `/etc/pinlock/<user>` as `scrypt` hashes, owned by root
   and readable by your group, since the KDE lock screen checks them as you.
   Changing a PIN needs root, through polkit in the setup app.
+- **Passkey panel, login screen.** While the greeter is up, pinlockd runs
+  `pinlock overlay` as the greeter's own user on the greeter's Wayland
+  display. It's a layer-shell surface pinned bottom-left that never takes
+  keyboard focus or mouse input, so presses still land in the password box.
+  pinlockd mirrors what it types into the panel's dots, and the panel hides
+  after 20 s without input.
+- **Passkey panel, lock screen.** KWin hides every other window while the
+  screen is locked, so the overlay can't be used there. Instead pinlock
+  ships a tiny Plasma shell package whose `LockScreen.qml` is Plasma's own
+  lock screen, imported unchanged, plus the panel. `pinlock lockscreen enable`
+  points KWin, and only KWin, at it with `PLASMA_DEFAULT_SHELL` (a systemd
+  user drop-in), and strips that variable from plasmashell's service as a
+  safety net. If the package ever fails to load, Plasma falls back to its
+  normal lock screen.
 - **Unlock action.** If the screen unlocks within 15 s of the controller
   pressing Start, pinlockd runs `pinlock on-unlock` inside your own session.
   It reads `~/.config/pinlock/pinlock.conf`:

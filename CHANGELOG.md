@@ -21,9 +21,13 @@ First release.
   faillock lockout.
 - Optional action after a controller unlock: Steam Big Picture (default), a
   custom command, or nothing.
+- Xbox-style passkey panel: an overlay in the bottom-left of the login
+  screen that appears on the first button press, and an optional lock screen
+  version (`pinlock lockscreen enable`, or the toggle in the setup app).
 - `pinlock-setup`, a controller-friendly PyQt6 app to set or change the PIN,
   test the controller, pick the unlock action and remove the PIN.
-- `pinlock` command line: `status`, `test`, `set`, `remove`, `pam`.
+- `pinlock` command line: `status`, `test`, `set`, `remove`, `pam`,
+  `lockscreen`.
 - Makefile install, `install.sh` / `uninstall.sh`, and an Arch PKGBUILD.
 
 [Unreleased]: https://github.com/v6Bv/pinlock/compare/v0.1.0...HEAD

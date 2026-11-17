@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (QApplication, QFrame, QGridLayout, QHBoxLayout, QLa
                              QVBoxLayout, QWidget)
 from evdev import ecodes as e
 
-from . import __author__, __url__, __version__, config, keymap, pam, pinstore
+from . import __author__, __url__, __version__, config, keymap, lockscreen, pam, pinstore
 
 HOLD_MS = 800
 FLASH_MS = 180
@@ -252,6 +252,7 @@ class HomePage(Page):
         screens = [pam.SERVICES[s] for s, st in pam.status().items() if st == "enabled"]
         pads = self.app.pads.names()
         user = self.app.user
+        panel = lockscreen.status()
         self.status.setText("<table>" + "".join([
             row("Background service", running, "running" if running else
                 "not running (run install.sh, or sudo systemctl enable --now pinlockd)"),
@@ -259,6 +260,8 @@ class HomePage(Page):
                 "not hooked up (sudo pinlock pam enable)"),
             row(f"PIN for {user}", pinstore.has_pin(user),
                 "set" if pinstore.has_pin(user) else "not set yet"),
+            row("Lock screen panel", panel == "on", panel if panel != "off" else
+                "off (turn it on below)"),
             row("Controller", bool(pads), ", ".join(dict.fromkeys(pads)) or
                 "none found. Connect one."),
         ]) + "</table>")
@@ -271,7 +274,9 @@ class HomePage(Page):
         settings = config.load()
         entries = [("set", "Change PIN" if has else "Set up a PIN"),
                    ("test", "Test controller"),
-                   ("action", f"After unlocking:  {config.ACTIONS[settings['action']]}  ◂ ▸")]
+                   ("action", f"After unlocking:  {config.ACTIONS[settings['action']]}  ◂ ▸"),
+                   ("panel", "Lock screen panel:  " +
+                    ("On" if lockscreen.enabled() else "Off") + "  ◂ ▸")]
         if has:
             entries.append(("remove", "Remove PIN"))
         entries.append(("quit", "Quit"))
@@ -296,6 +301,8 @@ class HomePage(Page):
             self.app.show_page(self.app.test_page)
         elif key == "action":
             self.cycle_action(1)
+        elif key == "panel":
+            self.toggle_panel()
         elif key == "remove":
             self.app.show_page(self.app.remove_page)
         elif key == "quit":
@@ -310,6 +317,18 @@ class HomePage(Page):
         self.refresh()
         self.say(f"After unlocking with the controller: {config.ACTIONS[settings['action']]}")
 
+    def toggle_panel(self):
+        try:
+            if lockscreen.enabled():
+                lockscreen.disable()
+                self.say("Lock screen panel off from your next login.")
+            else:
+                lockscreen.enable()
+                self.say("Lock screen panel on. It shows up after you log out and back in.")
+        except (RuntimeError, OSError) as exc:
+            self.say(f"Couldn't change it: {exc}", tone="error")
+        self.refresh()
+
     def button(self, btn):
         n = self.menu.count()
         if btn == "UP":
@@ -318,6 +337,8 @@ class HomePage(Page):
             self.menu.setCurrentRow((self.menu.currentRow() + 1) % n)
         elif btn in ("LEFT", "RIGHT") and self.current() == "action":
             self.cycle_action(1 if btn == "RIGHT" else -1)
+        elif btn in ("LEFT", "RIGHT") and self.current() == "panel":
+            self.toggle_panel()
         elif btn in ("A", "START"):
             self.activate()
         elif btn == "B":
@@ -326,6 +347,9 @@ class HomePage(Page):
     def key(self, ev):
         if ev.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right) and self.current() == "action":
             self.cycle_action(1 if ev.key() == Qt.Key.Key_Right else -1)
+            return True
+        if ev.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right) and self.current() == "panel":
+            self.toggle_panel()
             return True
         if ev.key() == Qt.Key.Key_Escape:
             self.app.close()

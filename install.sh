@@ -6,11 +6,12 @@ cd "$(dirname "$0")"
 
 missing=()
 python3 -c 'import evdev' 2>/dev/null || missing+=("python-evdev")
-python3 -c 'import PyQt6' 2>/dev/null || missing+=("python-pyqt6 (only for the setup app)")
+python3 -c 'import PyQt6' 2>/dev/null || missing+=("python-pyqt6 (setup app and login screen panel)")
+[[ -d /usr/lib/qt6/qml/org/kde/layershell ]] || missing+=("layer-shell-qt (login screen panel)")
 command -v pkexec >/dev/null || missing+=("polkit")
 if ((${#missing[@]})); then
     echo "Missing: ${missing[*]}"
-    echo "On Arch: pacman -S python-evdev python-pyqt6 polkit"
+    echo "On Arch: pacman -S python-evdev python-pyqt6 layer-shell-qt polkit"
     python3 -c 'import evdev' 2>/dev/null || exit 1
 fi
 
@@ -19,4 +20,5 @@ make install PREFIX=/usr/local
 systemctl daemon-reload
 systemctl enable --now pinlockd.service
 echo
-echo "Installed. Open \"pinlock\" from your app menu (or run pinlock-setup) to set your PIN."
+echo "Installed. Open \"pinlock\" from your app menu (or run pinlock-setup) to set your PIN"
+echo "and turn on the lock screen panel."

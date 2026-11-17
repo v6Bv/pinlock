@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 
-from . import __version__, config, keymap, pam, pinstore
+from . import __version__, config, keymap, lockscreen, pam, pinstore
 
 GUI_HINT = "Buttons: A=1 B=2 X=3 Y=4 LB=5 RB=6 ↑=7 →=8 ↓=9 ←=0, Start=Enter, View=Backspace"
 
@@ -75,6 +75,7 @@ def cmd_status(args):
     print(f"  PIN for {user}: {'set' if pinstore.has_pin(user) else 'not set'}")
     for svc, state in pam.status().items():
         print(f"  {pam.SERVICES[svc]} ({svc}): {state}")
+    print(f"  lock screen panel: {lockscreen.status()}")
     pads = keymap.open_gamepads()
     print(f"  controllers: {', '.join(d.name for d in pads) or 'none found'}")
 
@@ -118,6 +119,27 @@ def cmd_pam(args):
     changed = pam.enable(self_path()) if args.action == "enable" else pam.disable()
     verb = "Enabled" if args.action == "enable" else "Disabled"
     print(f"{verb} for: {', '.join(changed)}" if changed else "Nothing to change.")
+
+
+def cmd_lockscreen(args):
+    if os.geteuid() == 0:
+        sys.exit("Run this as yourself, not with sudo: it's a per-user setting.")
+    if args.action == "enable":
+        try:
+            lockscreen.enable()
+        except RuntimeError as exc:
+            sys.exit(str(exc))
+        print("Lock screen panel turned on. It shows up after you log out and back in.")
+    elif args.action == "disable":
+        lockscreen.disable()
+        print("Lock screen panel turned off (from your next login).")
+    else:
+        print(lockscreen.status())
+
+
+def cmd_overlay(args):
+    from . import overlay
+    overlay.main()
 
 
 def cmd_on_unlock(args):
@@ -169,12 +191,16 @@ def main(argv=None):
     p.add_argument("user", nargs="?")
     p.set_defaults(func=cmd_status)
     sub.add_parser("test", help="show what each controller button types").set_defaults(func=cmd_test)
+    p = sub.add_parser("lockscreen", help="show the passkey panel on the lock screen (per user)")
+    p.add_argument("action", choices=["enable", "disable", "status"])
+    p.set_defaults(func=cmd_lockscreen)
     p = sub.add_parser("pam", help="hook the login/lock screens into PAM (root)")
     p.add_argument("action", choices=["enable", "disable", "status"])
     p.set_defaults(func=cmd_pam)
     # Internal entry points, hidden from --help.
     sub.add_parser("check").set_defaults(func=cmd_check)
     sub.add_parser("on-unlock").set_defaults(func=cmd_on_unlock)
+    sub.add_parser("overlay").set_defaults(func=cmd_overlay)
 
     args = ap.parse_args(argv)
     try:

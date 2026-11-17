@@ -9,7 +9,7 @@ from unittest import mock
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from pinlock import keymap, pam, pinstore  # noqa: E402
+from pinlock import keymap, lockscreen, pam, pinstore  # noqa: E402
 
 USER = getpass.getuser()
 
@@ -128,6 +128,67 @@ class CheckCommandTest(unittest.TestCase):
         self.assertEqual(self.check(b""), 1)
         self.assertEqual(self.check(b"9070\0", user="nobody-here"), 1)
         self.assertEqual(self.check(b"9070\0", pam_type="password"), 1)
+
+
+class LockscreenTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        for p in (mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": self.tmp.name}),
+                  mock.patch.object(lockscreen, "package_installed", return_value=True),
+                  mock.patch.object(lockscreen.subprocess, "run")):
+            p.start()
+            self.addCleanup(p.stop)
+
+    def read(self, unit):
+        with open(lockscreen.dropin_path(unit)) as f:
+            return f.read()
+
+    def test_enable_sets_kwin_only(self):
+        lockscreen.enable()
+        self.assertTrue(lockscreen.enabled())
+        self.assertIn("Environment=PLASMA_DEFAULT_SHELL=io.github.v6bv.pinlock",
+                      self.read(lockscreen.KWIN_UNIT))
+        # plasmashell must never pick up pinlock's shell package.
+        self.assertIn("UnsetEnvironment=PLASMA_DEFAULT_SHELL", self.read(lockscreen.SHELL_UNIT))
+        self.assertNotIn("Environment=PLASMA_DEFAULT_SHELL=", self.read(lockscreen.SHELL_UNIT)
+                         .replace("UnsetEnvironment", ""))
+
+    def test_disable_removes_both(self):
+        lockscreen.enable()
+        lockscreen.disable()
+        self.assertFalse(lockscreen.enabled())
+        for unit in (lockscreen.KWIN_UNIT, lockscreen.SHELL_UNIT):
+            self.assertFalse(os.path.exists(os.path.dirname(lockscreen.dropin_path(unit))))
+        lockscreen.disable()  # second time is a no-op
+
+    def test_disable_keeps_other_dropins(self):
+        lockscreen.enable()
+        other = os.path.join(os.path.dirname(lockscreen.dropin_path()), "mine.conf")
+        open(other, "w").close()
+        lockscreen.disable()
+        self.assertTrue(os.path.exists(other))
+
+    def test_needs_package(self):
+        with mock.patch.object(lockscreen, "package_installed", return_value=False):
+            with self.assertRaises(RuntimeError):
+                lockscreen.enable()
+        self.assertFalse(lockscreen.enabled())
+
+
+class OverlayDotsTest(unittest.TestCase):
+    def test_dots_follow_typing(self):
+        from evdev import ecodes as e
+        from pinlock import daemon
+        ov = daemon.Overlay("/bin/false")
+        ov.proc = mock.Mock()
+        sent = []
+        ov.proc.stdin.write.side_effect = lambda b: sent.append(b.decode().strip())
+        for key in (e.KEY_1, e.KEY_2, e.KEY_3, e.KEY_BACKSPACE, e.KEY_4, e.KEY_ENTER):
+            ov.key(key)
+        self.assertEqual(sent, ["show 1", "show 2", "show 3", "show 2", "show 3", "show 0"])
+        ov.proc = None
+        ov.key(e.KEY_1)  # no panel running: nothing to do, no crash
 
 
 class KeymapTest(unittest.TestCase):
