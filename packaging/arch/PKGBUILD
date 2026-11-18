@@ -1,6 +1,6 @@
 # Maintainer: v6Bv <https://github.com/v6Bv>
 pkgname=pinlock
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="Log in and unlock with a PIN typed on a game controller"
 arch=('any')
@@ -12,7 +12,7 @@ optdepends=('python-pyqt6: setup app and login screen passkey panel'
             'steam: open Big Picture after unlocking')
 install=pinlock.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-sha256sums=('a996b45982047551ae1a8e3bc924a2f43e9f64fd68a14c9fe1416d5c304091c7')
+sha256sums=('SKIP')
 
 package() {
   cd "$pkgname-$pkgver"

@@ -29,7 +29,12 @@ from . import keymap
 
 BUTTON_KEYS = {btn: getattr(e, f"KEY_{digit}") for btn, digit in keymap.DIGITS.items()}
 BUTTON_KEYS.update({"START": e.KEY_ENTER, "VIEW": e.KEY_BACKSPACE})
-RESCAN_SECONDS = 2.0
+# Short, so a controller that reconnects after the PC wakes is picked up
+# before the first press. Scans are cheap: known non-gamepads are skipped.
+RESCAN_SECONDS = 0.5
+# Steam Input and similar tools create a virtual pad that copies a real one;
+# the same button from a second pad within this window is the copy.
+MIRROR_SECONDS = 0.04
 STATE_SECONDS = 1.0
 UNLOCK_WINDOW_SECONDS = 15.0
 
@@ -119,6 +124,21 @@ class Overlay:
                 self.proc = None
 
 
+class MirrorFilter:
+    """Drops a press that is a virtual pad's copy of one we just handled."""
+
+    def __init__(self, window=MIRROR_SECONDS):
+        self.window = window
+        self.last = {}  # key -> (time, source)
+
+    def accept(self, key, source, now):
+        prev = self.last.get(key)
+        if prev and prev[1] != source and now - prev[0] < self.window:
+            return False  # not recorded, so it can't shadow a real press
+        self.last[key] = (now, source)
+        return True
+
+
 def log(msg):
     print(msg, file=sys.stderr, flush=True)
 
@@ -191,6 +211,8 @@ def run(pinlock_cmd):
     watcher = SessionWatcher(pinlock_cmd, overlay)
     watcher.start()
     pads = {}  # fd -> InputDevice
+    not_pads = {}
+    mirror = MirrorFilter()
     last_scan = 0.0
 
     def tap(key):
@@ -202,7 +224,7 @@ def run(pinlock_cmd):
     while True:
         if time.monotonic() - last_scan > RESCAN_SECONDS:
             last_scan = time.monotonic()
-            for dev in keymap.open_gamepads({d.path for d in pads.values()}):
+            for dev in keymap.open_gamepads({d.path for d in pads.values()}, not_pads):
                 pads[dev.fd] = dev
                 log(f"watching {dev.path}: {dev.name}")
 
@@ -214,12 +236,16 @@ def run(pinlock_cmd):
             except OSError:  # unplugged
                 log(f"lost {dev.path}")
                 del pads[fd]
+                try:
+                    dev.close()
+                except OSError:
+                    pass
                 continue
             if not watcher.armed:
                 continue
             for ev in events:
                 key = BUTTON_KEYS.get(keymap.button_pressed(ev))
-                if key is None:
+                if key is None or not mirror.accept(key, fd, time.monotonic()):
                     continue
                 tap(key)
                 overlay.key(key)

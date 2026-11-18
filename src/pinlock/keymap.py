@@ -61,12 +61,24 @@ def is_gamepad(dev):
     return e.BTN_SOUTH in keys and e.BTN_START in keys
 
 
-def open_gamepads(skip_paths=()):
-    """Open every gamepad not already in skip_paths; returns InputDevices."""
+def open_gamepads(skip_paths=(), not_pads=None):
+    """Open every gamepad not already in skip_paths; returns InputDevices.
+
+    not_pads, if given, is a dict that remembers devices already found not to
+    be gamepads, so frequent rescans don't reopen every keyboard and mouse.
+    A device node that was recreated (hotplug) is checked again.
+    """
+    import os
     import evdev
     pads = []
     for path in evdev.list_devices():
         if path in skip_paths:
+            continue
+        try:
+            stamp = os.stat(path).st_ctime_ns
+        except OSError:
+            continue
+        if not_pads is not None and not_pads.get(path) == stamp:
             continue
         try:
             dev = evdev.InputDevice(path)
@@ -76,4 +88,6 @@ def open_gamepads(skip_paths=()):
             pads.append(dev)
         else:
             dev.close()
+            if not_pads is not None:
+                not_pads[path] = stamp
     return pads
