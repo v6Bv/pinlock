@@ -12,7 +12,7 @@ optdepends=('python-pyqt6: setup app and login screen passkey panel'
             'steam: open Big Picture after unlocking')
 install=pinlock.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('ec669395279092b0f9845e6b235a68732eb3a7b85f2b2f1c90f4349b61890567')
 
 package() {
   cd "$pkgname-$pkgver"
