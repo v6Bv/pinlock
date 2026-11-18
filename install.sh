@@ -18,7 +18,8 @@ fi
 make install PREFIX=/usr/local
 /usr/local/bin/pinlock pam enable
 systemctl daemon-reload
-systemctl enable --now pinlockd.service
+systemctl enable pinlockd.service
+systemctl restart pinlockd.service   # pick up new code when upgrading
 echo
 echo "Installed. Open \"pinlock\" from your app menu (or run pinlock-setup) to set your PIN"
 echo "and turn on the lock screen panel."
